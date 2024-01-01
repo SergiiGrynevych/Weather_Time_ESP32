@@ -30,7 +30,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 Adafruit_SSD1306 display(128, 32, &Wire, -1);
 
 const char *city = "Kyiv"; // City name
-const char *api = "5596959aff336512de73ae27065cad69"; // OpenWeatherMap API key
+const char *api = "Your OpenWeatherMap API key"; 
 
 const byte digit[10] = {
     B00111111, // 0
