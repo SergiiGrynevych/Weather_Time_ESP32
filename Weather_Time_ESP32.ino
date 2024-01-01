@@ -16,6 +16,9 @@ int _code;
 TaskHandle_t _Task1Time;
 
 const int digitPins[4] = {4, 19, 21, 22};
+
+const int clockPins[4] = {18, 5, 23, 15};
+
 const int clockPin = 18;
 const int latchPin = 5;
 const int dataPin = 23;
@@ -30,7 +33,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 Adafruit_SSD1306 display(128, 32, &Wire, -1);
 
 const char *city = "Kyiv"; // City name
-const char *api = "Your OpenWeatherMap API key"; 
+const char *api = "5596959aff336512de73ae27065cad69"; // OpenWeatherMap API key
 
 const byte digit[10] = {
     B00111111, // 0
@@ -379,27 +382,25 @@ void setup() {
   Serial.begin(115200);
   delay(5);
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < sizeof(digitPins); i++) {
     pinMode(digitPins[i], OUTPUT);
   }
 
-  pinMode(latchPin, OUTPUT);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-  pinMode(secondIndicatorPin, OUTPUT);
+  for(int i = 0; i < sizeof(clockPins); i++){
+     pinMode(clockPins[i], OUTPUT); 
+  }
 
   Wire.begin(27, 26);
 
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C, 1);
 
-
   display.setTextColor(WHITE);
 
   delay(1000);
   connectWiFi();
-    display.setRotation(1);
+  display.setRotation(1);
   display.setCursor(0, 0);
-          DisplayLog("WiFi connected!");
+  DisplayLog("WiFi connected!");
   delay(1000);
 
   xTaskCreatePinnedToCore(
@@ -413,20 +414,20 @@ void setup() {
 }
 
 //Task1code: blinks an LED every 1000 ms
-void Task1Time( void * pvParameters ){
-
+void Task1Time( void * pvParameters )
+{
   timeClient.begin();
   timeClient.setTimeOffset(2 * 3600); 
 
-    while(true){
-
+    while(true)
+    {
       timeClient.update();
 
       int hours = timeClient.getHours();
       int minutes = timeClient.getMinutes();
       int seconds = timeClient.getSeconds();
 
-      digitBuffer[3] = hours / 10;
+      digitBuffer[3] = hours / 10; 
       digitBuffer[2] = hours % 10;
       digitBuffer[1] = minutes / 10;
       digitBuffer[0] = minutes % 10;
@@ -435,16 +436,21 @@ void Task1Time( void * pvParameters ){
       
       digitalWrite(secondIndicatorPin, seconds % 2 == 0 ? HIGH : LOW);
 
-      delay(20);
+      delay(6);
     }
 }
 
 void loop() {
-  CheckWiFi();
+
   display.clearDisplay();
   display.setCursor(0, 0);
   String weather = getWeather();
 
+  if (weather == "HTTP error" || weather == "WiFi error")
+  {
+      CheckWiFi();
+  }
+  
   displaywidget(_code);
 
   display.setCursor(0, 33);
@@ -455,10 +461,8 @@ void loop() {
 
 void CheckWiFi()
 {
-  if ((WiFi.status() != WL_CONNECTED)) {
     connectWiFi();
     display.setRotation(1);
-  }
 }
 
 void displaywidget(int code_no)
